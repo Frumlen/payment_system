@@ -58,3 +58,51 @@ class ClientReportSerializer(serializers.Serializer):
     name = serializers.CharField(required=True)
     start_date = serializers.DateTimeField(input_formats=settings.DATE_INPUT_FORMATS, required=False)
     end_date = serializers.DateTimeField(input_formats=settings.DATE_INPUT_FORMATS, required=False)
+
+    def validate_name(self, data):
+        if not data:
+            raise serializers.ValidationError("This field is required.")
+
+        try:
+            return Wallet.objects.get(name=data)
+        except Wallet.DoesNotExist:
+            raise serializers.ValidationError("Wallet not exists.")
+
+
+class WalletRefillByNameSerializer(serializers.Serializer):
+    amount = serializers.FloatField(required=True)
+    name = serializers.CharField(required=True)
+
+    def validate_name(self, data):
+        if not data:
+            raise serializers.ValidationError("This field is required.")
+
+        try:
+            return Wallet.objects.get(name=data)
+        except Wallet.DoesNotExist:
+            raise serializers.ValidationError("Wallet not exists.")
+
+
+class WalletToWalletByNameSerializer(serializers.Serializer):
+    amount = serializers.FloatField(required=True)
+    from_name = serializers.CharField(required=True)
+    to_name = serializers.CharField(required=True)
+    currency_use = serializers.ChoiceField(required=True, choices=['FROM', 'TO'])
+
+    def validate(self, data):
+        # Тут мы ожидаем, что 'from_name' и 'to_name' в любом случае есть. Проверка была на уровне роутинга.
+        if data['from_name'] == data['to_name']:
+            # Нельзя переводить самому себе.
+            raise serializers.ValidationError("Can't translate to yourself")
+
+        try:
+            data['wallet_from'] = Wallet.objects.get(name=data['from_name'])
+        except Wallet.DoesNotExist:
+            raise serializers.ValidationError("Wallet not exists")
+
+        try:
+            data['wallet_to'] = Wallet.objects.get(name=data['to_name'])
+        except Wallet.DoesNotExist:
+            raise serializers.ValidationError("Wallet not exists")
+
+        return data

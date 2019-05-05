@@ -4,5 +4,3 @@ psycopg2
 dj-database-url
 celery==4.3.0
 django-celery-results==1.0.4
-pandas
-lxml

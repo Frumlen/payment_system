@@ -1,6 +1,6 @@
-import io
-import pandas as pd
-from lxml import html
+import csv
+from django.utils.encoding import smart_str
+from django.core import serializers as core_serializers
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.db.models import Q
@@ -13,7 +13,8 @@ from rest_framework import serializers
 from api.tasks import create_transaction
 from api.decorators import handle_error_json
 from api.models import Wallet, WalletHistory, ExchangeRate
-from api.serializers import ExchangeRateSerializer, WalletSerializer, ClientReportSerializer
+from api.serializers import ExchangeRateSerializer, WalletSerializer, ClientReportSerializer, \
+    WalletRefillByNameSerializer, WalletToWalletByNameSerializer
 from payment_system.pagination import ResultsSetPagination
 
 
@@ -45,27 +46,22 @@ class WalletRefillByNameView(APIView):
     Пополнения баланса кошелька по wallet name
     """
 
-    def _validate(self, data):
-        """валидация входных данных"""
-        if 'amount' not in data:
-            raise serializers.ValidationError({'amount': ["This field is required."]})
-        elif not data['amount'].isdigit():
-            raise serializers.ValidationError({'amount': ["Must be float."]})
-
     @method_decorator(handle_error_json())
     def post(self, request, *args, **kwargs):
-        self._validate(request.POST)
-        try:
-            wallet = Wallet.objects.get(name=kwargs.get('name'))
-            # Создаем транзакция пополнения кошелька.
-            transaction_data = dict(wallet_to_id=wallet.pk,
-                                    currency_id=wallet.currency.pk,
-                                    amount=request.POST.get('amount'),
-                                    operation='REFILL')
-            create_transaction.delay(transaction_data)
-        except Wallet.DoesNotExist:
-            raise serializers.ValidationError({'non_field_errors': ["Wallet not exists"]})
+        data = kwargs.copy()
+        data['amount'] = request.POST.get('amount')
 
+        serializer = WalletRefillByNameSerializer(data=data)
+        if not serializer.is_valid():
+            raise serializers.ValidationError(serializer.errors)
+
+        wallet = serializer.validated_data['name']
+        # Создаем транзакция пополнения кошелька.
+        transaction_data = dict(wallet_to_id=wallet.pk,
+                                currency_id=wallet.currency.pk,
+                                amount=request.POST.get('amount'),
+                                operation='REFILL')
+        create_transaction.delay(transaction_data)
         return Response(data=dict(result="success", message="Transaction REFILL created"), status=HTTP_200_OK)
 
 
@@ -75,40 +71,18 @@ class WalletToWalletByNameView(APIView):
     Денежный перевод от клиента > клиенту по имени.
     """
 
-    def _validate(self, data):
-        """валидация входных данных"""
-        if 'amount' not in data:
-            raise serializers.ValidationError({'amount': ["This field is required."]})
-        elif not data['amount'].isdigit():
-            raise serializers.ValidationError({'amount': ["Must be float."]})
-
-        # Тут мы ожидаем, что 'from_name' и 'to_name' в любом случае есть. Проверка была на уровне роутинга.
-        if data['from_name'] == data['to_name']:
-            # Нельзя переводить самому себе.
-            raise serializers.ValidationError({'non_field_errors': ["Can't translate to yourself"]})
-
-        # currency_use - обязательное поле. может быть "FROM", "TO"
-        if not data.get('currency_use') in ["FROM", "TO"]:
-            raise serializers.ValidationError({'currency_use': ["Set currency_use 'FROM' or 'TO'"]})
-
     @method_decorator(handle_error_json())
     def post(self, request, *args, **kwargs):
         data = kwargs.copy()
         data['currency_use'] = request.POST.get('currency_use')
         data['amount'] = request.POST.get('amount')
-        self._validate(data)
-
-        try:
-            wallet_from = Wallet.objects.get(name=data['from_name'])
-        except Wallet.DoesNotExist:
-            raise serializers.ValidationError({'from_name': ["Wallet not exists"]})
-
-        try:
-            wallet_to = Wallet.objects.get(name=data['to_name'])
-        except Wallet.DoesNotExist:
-            raise serializers.ValidationError({'non_field_errors': ["Wallet not exists"]})
+        serializer = WalletToWalletByNameSerializer(data=data)
+        if not serializer.is_valid():
+            raise serializers.ValidationError(serializer.errors)
 
         # Создаем транзакцию перевода от клиента > клиенту
+        wallet_from= serializer.validated_data['wallet_from']
+        wallet_to = serializer.validated_data['wallet_to']
         transaction_data = dict(
             operation='TRANSFER',
             wallet_from_id=wallet_from.pk,
@@ -116,7 +90,6 @@ class WalletToWalletByNameView(APIView):
             currency_id=wallet_from.currency.pk if data['currency_use'] == 'FROM' else wallet_to.currency.pk,
             amount=data['amount'])
         create_transaction.delay(transaction_data)
-
         return Response(data=dict(result="success", message="Transaction TRANSFER created"), status=HTTP_200_OK)
 
 
@@ -127,11 +100,7 @@ class ClientReportView(APIView):
         if not serializer.is_valid():
             raise serializers.ValidationError(serializer.errors)
 
-        try:
-            wallet = Wallet.objects.get(name=serializer.validated_data['name'])
-        except Wallet.DoesNotExist:
-            raise serializers.ValidationError({'non_field_errors': ["Wallet not exists"]})
-
+        wallet = serializer.validated_data['name']
         args = Q()
         args &= Q(wallet=wallet)
         if 'start_date' in serializer.validated_data:
@@ -157,50 +126,61 @@ class ClientReportView(APIView):
             'Cумма в валюте',
             'Сумма в USD'
         ]
-        wallet_history = WalletHistory.objects.filter(args).prefetch_related('oper').values_list(*values)
-        if not wallet_history.exists():
+        wallet_history = WalletHistory.objects.filter(args).prefetch_related('oper')
+        queryset = wallet_history.values(*values)
+        if not queryset.exists():
             raise serializers.ValidationError({'non_field_errors': ["There are no transactions for this wallet."]})
 
-        df = pd.DataFrame(list(wallet_history))
-        df.columns = values_trans
+        # Конструктор TD элементов для HTML версии страницы.
+        html_tr = ""
+        for obj in queryset.iterator():
+            tr = "<tr>\n"
+            for val in values:
+                tr += "<td>{%s}</td>\n" % val
+            tr += '</tr>\n'
+            html_tr += tr.format(**obj)
 
-        # Задаем формат отображения даты.
-        df['Время'] = pd.to_datetime(df['Время']).dt.strftime('%Y-%m-%d %H:%M:%S')
+        # Конструктор TR элемента
+        html_header = '<tr style="text-align: right;">\n'
+        for val in values_trans:
+            html_header += '<th>{}</th>\n'.format(val)
+        html_header += '</tr>\n'
 
-        # Причесываем Nan/None, корректируем вывод.
-        df['ID клиента'] = df['ID клиента'].astype(pd.np.str).replace('nan', 'Пополнение баланса')
-        df['Имя клиента'] = df['Имя клиента'].astype(pd.np.str).replace('None', '')
-        html_string = df.to_html(index=False)
+        # Собираем основном HTML
+        html = """
+               <html>
+               <body>
+                    <ul>
+                        <li><a href="{path}?{params}&export_file_type=csv">Download CSV report</a></li>
+                        <li><a href="{path}?{params}&export_file_type=xml">Download XML report</a></li>
+                   </ul>
+                   <table border="1" class="dataframe">
+                        <thead>{html_header}</thead>
+                        <tbody>{html_tr}</tbody>
+                    </table>
+               <body>
+               </html>
+               """.format(path=request.META.get('PATH_INFO'),
+                          html_header=html_header,
+                          html_tr=html_tr,
+                          params="&".join(["{}={}".format(k, v) for k, v in data.items()]))
 
         # Собираем файл отчета, если требуется.
         file_type = data.get('export_file_type')
         if file_type == 'xml':
-            output = io.BytesIO()
-            root = html.fromstring(html_string)
-            tree = root.getroottree()
-            tree.write(output, encoding='unicode')
-            response = HttpResponse(output.getvalue(), content_type='text/xml')
+            XMLSerializer = core_serializers.get_serializer("xml")
+            xml_serializer = XMLSerializer()
+            xml_serializer.serialize(wallet_history)
+            response = HttpResponse(xml_serializer.getvalue(), content_type='text/xml')
             response['Content-Disposition'] = 'attachment; filename="Report for {}.xml"'.format(wallet.name)
             return response
         elif file_type == 'csv':
-            output = io.StringIO()
-            df.to_csv(output, index=False, compression='gzip')
-            response = HttpResponse(output.getvalue(), content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="Report for {}.csv"'.format(wallet.name)
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=Report for {}.csv"'.format(wallet.name)
+            writer = csv.writer(response, csv.excel)
+            response.write(u'\ufeff'.encode('utf8'))  # BOM (optional...Excel needs it to open UTF-8 file properly)
+            writer.writerow([smart_str(val) for val in values_trans])
+            for obj in queryset:
+                writer.writerow([smart_str(obj[smart_str(val)]) for val in values])
             return response
-
-        # Добавляем ссылки для скачивания CSV и XML
-        fixed_html = """
-        <html>
-        <body>
-             <ul>
-                 <li><a href="{path}?{params}&export_file_type=csv">Download CSV report</a></li>
-                 <li><a href="{path}?{params}&export_file_type=xml">Download XML report</a></li>
-            </ul>
-            {body}
-        <body>
-        """.format(path=request.META.get('PATH_INFO'),
-                   body=html_string,
-                   params="&".join(["{}={}".format(k, v) for k, v in data.items()]))
-
-        return HttpResponse(fixed_html, content_type='text/html; charset=utf-8', status=HTTP_200_OK)
+        return HttpResponse(html, content_type='text/html; charset=utf-8', status=HTTP_200_OK)
