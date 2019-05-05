@@ -1,0 +1,38 @@
+[
+  {
+    "model": "api.currency",
+    "pk": 1,
+    "fields": {
+      "currency_name": "US Dollar",
+      "currency": "USD",
+      "fractional": 100
+    }
+  },
+  {
+    "model": "api.currency",
+    "pk": 2,
+    "fields": {
+      "currency_name": "Euro",
+      "currency": "EUR",
+      "fractional": 100
+    }
+  },
+  {
+    "model": "api.currency",
+    "pk": 3,
+    "fields": {
+      "currency_name": "Canadian dollar",
+      "currency": "CAD",
+      "fractional": 100
+    }
+  },
+  {
+    "model": "api.currency",
+    "pk": 4,
+    "fields": {
+      "currency_name": "Chinese yuan",
+      "currency": "CNY",
+      "fractional": 100
+    }
+  }
+]

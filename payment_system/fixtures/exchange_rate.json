@@ -1,0 +1,362 @@
+[
+  {
+    "model": "api.exchangerate",
+    "pk": 1,
+    "fields": {
+      "currency": 1,
+      "rate": 4.644,
+      "created": "2019-05-04T13:17:31.879Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 2,
+    "fields": {
+      "currency": 1,
+      "rate": 5.6244,
+      "created": "2019-05-04T13:17:31.883Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 3,
+    "fields": {
+      "currency": 1,
+      "rate": 4.7472,
+      "created": "2019-05-04T13:17:31.889Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 4,
+    "fields": {
+      "currency": 1,
+      "rate": 5.2632,
+      "created": "2019-05-04T13:17:31.894Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 5,
+    "fields": {
+      "currency": 1,
+      "rate": 4.902,
+      "created": "2019-05-04T13:17:31.902Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 6,
+    "fields": {
+      "currency": 1,
+      "rate": 5.0052,
+      "created": "2019-05-04T13:17:31.910Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 7,
+    "fields": {
+      "currency": 1,
+      "rate": 4.8504,
+      "created": "2019-05-04T13:17:31.918Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 8,
+    "fields": {
+      "currency": 1,
+      "rate": 5.5728,
+      "created": "2019-05-04T13:17:31.923Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 9,
+    "fields": {
+      "currency": 2,
+      "rate": 10.7474,
+      "created": "2019-05-04T13:17:31.927Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 10,
+    "fields": {
+      "currency": 2,
+      "rate": 8.874,
+      "created": "2019-05-04T13:17:31.931Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 11,
+    "fields": {
+      "currency": 2,
+      "rate": 10.0572,
+      "created": "2019-05-04T13:17:31.934Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 12,
+    "fields": {
+      "currency": 2,
+      "rate": 9.4656,
+      "created": "2019-05-04T13:17:31.939Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 13,
+    "fields": {
+      "currency": 2,
+      "rate": 10.5502,
+      "created": "2019-05-04T13:17:31.944Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 14,
+    "fields": {
+      "currency": 2,
+      "rate": 9.9586,
+      "created": "2019-05-04T13:17:31.948Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 15,
+    "fields": {
+      "currency": 2,
+      "rate": 9.2684,
+      "created": "2019-05-04T13:17:31.952Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 16,
+    "fields": {
+      "currency": 2,
+      "rate": 10.6488,
+      "created": "2019-05-04T13:17:31.956Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 17,
+    "fields": {
+      "currency": 2,
+      "rate": 9.5642,
+      "created": "2019-05-04T13:17:31.959Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 18,
+    "fields": {
+      "currency": 2,
+      "rate": 9.86,
+      "created": "2019-05-04T13:17:31.962Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 19,
+    "fields": {
+      "currency": 2,
+      "rate": 9.6628,
+      "created": "2019-05-04T13:17:31.968Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 20,
+    "fields": {
+      "currency": 3,
+      "rate": 9.4284,
+      "created": "2019-05-04T13:17:31.972Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 21,
+    "fields": {
+      "currency": 3,
+      "rate": 8.6427,
+      "created": "2019-05-04T13:17:31.976Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 22,
+    "fields": {
+      "currency": 3,
+      "rate": 7.9443,
+      "created": "2019-05-04T13:17:31.979Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 23,
+    "fields": {
+      "currency": 3,
+      "rate": 8.9046,
+      "created": "2019-05-04T13:17:31.984Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 24,
+    "fields": {
+      "currency": 3,
+      "rate": 9.5157,
+      "created": "2019-05-04T13:17:31.989Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 25,
+    "fields": {
+      "currency": 3,
+      "rate": 8.4681,
+      "created": "2019-05-04T13:17:31.993Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 26,
+    "fields": {
+      "currency": 3,
+      "rate": 9.1665,
+      "created": "2019-05-04T13:17:31.997Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 27,
+    "fields": {
+      "currency": 3,
+      "rate": 8.73,
+      "created": "2019-05-04T13:17:32.001Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 28,
+    "fields": {
+      "currency": 3,
+      "rate": 9.0792,
+      "created": "2019-05-04T13:17:32.005Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 29,
+    "fields": {
+      "currency": 4,
+      "rate": 7.4256,
+      "created": "2019-05-04T13:17:32.014Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 30,
+    "fields": {
+      "currency": 4,
+      "rate": 7.5072,
+      "created": "2019-05-04T13:17:32.018Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 31,
+    "fields": {
+      "currency": 4,
+      "rate": 7.9152,
+      "created": "2019-05-04T13:17:32.021Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 32,
+    "fields": {
+      "currency": 4,
+      "rate": 7.9968,
+      "created": "2019-05-04T13:17:32.024Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 33,
+    "fields": {
+      "currency": 4,
+      "rate": 8.7312,
+      "created": "2019-05-04T13:17:32.028Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 34,
+    "fields": {
+      "currency": 4,
+      "rate": 8.0784,
+      "created": "2019-05-04T13:17:32.031Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 35,
+    "fields": {
+      "currency": 4,
+      "rate": 7.344,
+      "created": "2019-05-04T13:17:32.035Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 36,
+    "fields": {
+      "currency": 4,
+      "rate": 8.568,
+      "created": "2019-05-04T13:17:32.038Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 37,
+    "fields": {
+      "currency": 4,
+      "rate": 7.752,
+      "created": "2019-05-04T13:17:32.043Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 38,
+    "fields": {
+      "currency": 4,
+      "rate": 8.4864,
+      "created": "2019-05-04T13:17:32.047Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 39,
+    "fields": {
+      "currency": 4,
+      "rate": 7.8336,
+      "created": "2019-05-04T13:17:32.052Z"
+    }
+  },
+  {
+    "model": "api.exchangerate",
+    "pk": 40,
+    "fields": {
+      "currency": 4,
+      "rate": 8.2416,
+      "created": "2019-05-04T13:17:32.056Z"
+    }
+  }
+]

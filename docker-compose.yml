@@ -1,0 +1,63 @@
+version: '2'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+    - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - payment-system-backend-tier
+    env_file: common.env
+    depends_on:
+      - db
+      - rabbit
+
+  db:
+    image: library/postgres:11.1-alpine
+    restart: unless-stopped
+    networks:
+      - payment-system-backend-tier
+    volumes:
+      - payment-system-db:/var/lib/postgresql
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  celery:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: celery -A payment-system-worker worker -B --app=payment_system.celeryconf:app --loglevel=info
+    restart: unless-stopped
+    networks:
+      - payment-system-backend-tier
+    env_file: common.env
+    depends_on:
+      - rabbit
+
+  rabbit:
+    image: rabbitmq:3
+    restart: unless-stopped
+    env_file: common.env
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=mypass
+    ports:
+      - "5672:5672"
+    networks:
+      - payment-system-backend-tier
+    volumes:
+      - payment-system-rabbit:/data
+
+volumes:
+  payment-system-db:
+    driver: local
+  payment-system-rabbit:
+    driver: local
+
+networks:
+  payment-system-backend-tier:
+    driver: bridge
