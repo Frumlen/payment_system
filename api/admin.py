@@ -1,5 +1,5 @@
 from django.contrib import admin
-from api.models import Wallet, Currency, Transaction, WalletHistory, ExchangeRate, Operation
+from .models import Wallet, Currency, Transaction, WalletHistory, ExchangeRate, Operation
 
 admin.site.register(Wallet)
 admin.site.register(Currency)

@@ -1,6 +1,6 @@
 from django.conf.urls import url
 from rest_framework.routers import SimpleRouter
-from api.views import ClientView, ExchangeRateView, WalletRefillByNameView, WalletToWalletByNameView, ClientReportView
+from .views import ClientView, ExchangeRateView, WalletRefillByNameView, WalletToWalletByNameView, ClientReportView
 
 router = SimpleRouter(trailing_slash=False)
 router.register('client', ClientView, base_name='client')

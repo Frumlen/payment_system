@@ -10,10 +10,10 @@ from rest_framework import mixins
 from rest_framework.response import Response
 from rest_framework.decorators import APIView
 from rest_framework import serializers
-from api.tasks import create_transaction
-from api.decorators import handle_error_json
-from api.models import Wallet, WalletHistory, ExchangeRate
-from api.serializers import ExchangeRateSerializer, WalletSerializer, ClientReportSerializer, \
+from .tasks import create_transaction
+from .decorators import handle_error_json
+from .models import Wallet, WalletHistory, ExchangeRate
+from .serializers import ExchangeRateSerializer, WalletSerializer, ClientReportSerializer, \
     WalletRefillByNameSerializer, WalletToWalletByNameSerializer, WalletHistorySerializer
 from payment_system.pagination import ResultsSetPagination
 
@@ -21,13 +21,13 @@ from payment_system.pagination import ResultsSetPagination
 class ClientView(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.CreateModelMixin, GenericViewSet):
     """
     retrieve:
-    Возвращает данного пользователя.
+    Returns the current user.
 
     list:
-    Возвращает список всех существующих пользователей.
+    Returns a list of all existing users.
 
     create:
-    Регистрация клиента с указанием его имени, страны, города регистрации, валюты создаваемого кошелька.
+    Registration of the client with his name, country, city of registration, currency of the wallet being created.
     """
     serializer_class = WalletSerializer
     queryset = Wallet.objects.all()
@@ -42,8 +42,7 @@ class ExchangeRateView(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.
 
 class WalletRefillByNameView(APIView):
     """
-    post:
-    Пополнения баланса кошелька по wallet name
+    Top up wallet balance by wallet name
     """
 
     @method_decorator(handle_error_json())
@@ -67,8 +66,7 @@ class WalletRefillByNameView(APIView):
 
 class WalletToWalletByNameView(APIView):
     """
-    post:
-    Денежный перевод от клиента > клиенту по имени.
+    Money transfer from client> client by name.
     """
 
     @method_decorator(handle_error_json())
@@ -124,7 +122,7 @@ class ClientReportView(APIView):
             return response
         elif export_file_type == 'csv':
             response = HttpResponse(content_type='text/csv', status=HTTP_200_OK)
-            response['Content-Disposition'] = 'attachment; filename=Report for {}.csv"'.format(wallet.name)
+            response['Content-Disposition'] = 'attachment; filename="Report for {}.csv"'.format(wallet.name)
             values = [
                 'oper',
                 'type',
@@ -136,14 +134,14 @@ class ClientReportView(APIView):
                 'oper__usd_amount',
             ]
             values_trans = [
-                'ID операции',
-                'Тип',
-                'ID клиента',
-                'Имя клиента',
-                'Время',
-                'Cумма операции',
-                'Валюта операции',
-                'Сумма в USD'
+                'Operation ID',
+                'Type of',
+                'Customer ID',
+                'Customer Name',
+                'Time',
+                'Amount of operation',
+                'Transaction Currency',
+                'USD amount'
             ]
             writer = csv.writer(response, csv.excel)
             response.write(u'\ufeff'.encode('utf8'))  # BOM (optional...Excel needs it to open UTF-8 file properly)

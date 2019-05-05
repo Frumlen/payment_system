@@ -1,10 +1,12 @@
 from django.conf import settings
 from rest_framework import serializers
-from api.models import Wallet, ExchangeRate, Currency, WalletHistory
+from .models import Wallet, ExchangeRate, Currency, WalletHistory
 
 
 class WalletSerializer(serializers.ModelSerializer):
-    """Serializer to create, display wallet"""
+    """
+    Serializer to create, display wallet
+    """
     balance = serializers.IntegerField(read_only=True)
     created = serializers.DateTimeField(read_only=True, format=settings.DATE_OUTPUT_FORMAT)
     currency = serializers.CharField()
@@ -29,7 +31,9 @@ class WalletSerializer(serializers.ModelSerializer):
 
 
 class ExchangeRateSerializer(serializers.ModelSerializer):
-    """Serializer for creating, displaying currency quotes"""
+    """
+    Serializer for creating, displaying currency quotes
+    """
     currency_name = serializers.CharField(source='currency.currency_name', read_only=True)
     currency = serializers.CharField()
     rate = serializers.FloatField()
@@ -55,7 +59,9 @@ class ExchangeRateSerializer(serializers.ModelSerializer):
 
 
 class ClientReportSerializer(serializers.Serializer):
-    """Serializer to create report"""
+    """
+    Serializer to create report
+    """
     name = serializers.CharField(required=True)
     start_date = serializers.DateTimeField(input_formats=settings.DATE_INPUT_FORMATS, required=False)
     end_date = serializers.DateTimeField(input_formats=settings.DATE_INPUT_FORMATS, required=False)
@@ -71,7 +77,9 @@ class ClientReportSerializer(serializers.Serializer):
 
 
 class WalletRefillByNameSerializer(serializers.Serializer):
-    """Serializer to replenish the wallet"""
+    """
+    Serializer to replenish the wallet
+    """
     amount = serializers.FloatField(required=True)
     name = serializers.CharField(required=True)
 
@@ -86,7 +94,9 @@ class WalletRefillByNameSerializer(serializers.Serializer):
 
 
 class WalletToWalletByNameSerializer(serializers.Serializer):
-    """Serializer to replenish the wallet"""
+    """
+    Serializer to replenish the wallet
+    """
     amount = serializers.FloatField(required=True)
     from_name = serializers.CharField(required=True)
     to_name = serializers.CharField(required=True)
@@ -110,7 +120,9 @@ class WalletToWalletByNameSerializer(serializers.Serializer):
 
 
 class WalletHistorySerializer(serializers.ModelSerializer):
-    """Serializer for displaying operation history, for report"""
+    """
+    Serializer for displaying operation history, for report
+    """
     usd_amount = serializers.FloatField(source='oper.usd_amount')
     oper_date = serializers.DateTimeField(format=settings.DATE_OUTPUT_FORMAT)
     oper_currency = serializers.CharField(source='oper.currency')

@@ -3,11 +3,14 @@ import logging
 from celery import shared_task
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
-from api.models import Transaction, ExchangeRate, Operation, WalletHistory
+from .models import Transaction, ExchangeRate, Operation, WalletHistory
 
 
 @shared_task
 def create_transaction(data):
+    """
+    Creating a replenishment transaction, transfer between accounts
+    """
     with transaction.atomic():
         tran = Transaction.objects.create(**data)
         # get the last course at the time of the transaction
@@ -19,7 +22,7 @@ def create_transaction(data):
     return True
 
 
-def get_wallet_amount(tran, wallet, usd, tran_amount):
+def _get_wallet_amount(tran, wallet, usd, tran_amount):
     if tran.currency == wallet.currency:
         return tran_amount
     rate = ExchangeRate.objects.filter(currency=wallet.currency, created__lte=tran.created).order_by(
@@ -28,7 +31,10 @@ def get_wallet_amount(tran, wallet, usd, tran_amount):
         return math.floor(usd * rate.rate * wallet.currency.fractional)
 
 
-def create_operation(tran, usd, tran_amount):
+def _create_operation(tran, usd, tran_amount):
+    """
+    Сreate wallet operation
+    """
     operation = Operation.objects.create(
         currency=tran.currency,
         operation=tran.operation,
@@ -38,7 +44,10 @@ def create_operation(tran, usd, tran_amount):
     return operation
 
 
-def create_wallet_hist(tran, wallet, wallet_partner, oper, amount):
+def _create_wallet_hist(tran, wallet, wallet_partner, oper, amount):
+    """
+    Сreate wallet operation history
+    """
     wallet_history = WalletHistory.objects.create(
         wallet=wallet,
         oper=oper,
@@ -52,8 +61,10 @@ def create_wallet_hist(tran, wallet, wallet_partner, oper, amount):
         wallet_history.save()
 
 
-def inc_wallet_balance(wallet, amount):
-    # If there is not enough money in the account, we call an exception in order not to create data in the database.
+def _inc_wallet_balance(wallet, amount):
+    """
+    If there is not enough money in the account, we call an exception in order not to create data in the database.
+    """
     if wallet.balance + amount < 0:
         raise Exception('Wrong amount')
 
@@ -63,7 +74,9 @@ def inc_wallet_balance(wallet, amount):
 
 @shared_task
 def processing_transactions():
-    """Метод процессинга транзакций. В нем происходит вся логика перевода денег, сохранения истории"""
+    """
+    Transaction processing method It is the whole logic of the transfer of money, the preservation of history
+    """
     transacitons = Transaction.objects.exclude(status__in=['start', 'done']).order_by('created')
     counter = 0
 
@@ -77,20 +90,20 @@ def processing_transactions():
     
                 usd = math.floor(100 * tran.amount / rate.rate)
                 tran_amount = math.floor(tran.amount * tran.currency.fractional)
-                oper = create_operation(tran, usd, tran_amount)
+                oper = _create_operation(tran, usd, tran_amount)
     
                 wallet_to = tran.wallet_to
                 wallet_from = None
     
                 if tran.operation == 'TRANSFER':
                     wallet_from = tran.wallet_from
-                    wallet_from_amount = -1 * get_wallet_amount(tran, wallet_from, usd, tran_amount)
-                    create_wallet_hist(tran, wallet_from, wallet_to, oper, wallet_from_amount)
-                    inc_wallet_balance(wallet_from, wallet_from_amount)
+                    wallet_from_amount = -1 * _get_wallet_amount(tran, wallet_from, usd, tran_amount)
+                    _create_wallet_hist(tran, wallet_from, wallet_to, oper, wallet_from_amount)
+                    _inc_wallet_balance(wallet_from, wallet_from_amount)
     
-                wallet_to_amount = get_wallet_amount(tran, wallet_to, usd, tran_amount)
-                create_wallet_hist(tran, wallet_to, wallet_from, oper, wallet_to_amount)
-                inc_wallet_balance(wallet_to, wallet_to_amount)
+                wallet_to_amount = _get_wallet_amount(tran, wallet_to, usd, tran_amount)
+                _create_wallet_hist(tran, wallet_to, wallet_from, oper, wallet_to_amount)
+                _inc_wallet_balance(wallet_to, wallet_to_amount)
     
                 tran.status = 'done'
                 tran.save()
