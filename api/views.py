@@ -1,6 +1,6 @@
 import csv
 from django.utils.encoding import smart_str
-from django.core import serializers as core_serializers
+from django.core.serializers.xml_serializer import Serializer as XMLSerializer
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.db.models import Q
@@ -14,7 +14,7 @@ from api.tasks import create_transaction
 from api.decorators import handle_error_json
 from api.models import Wallet, WalletHistory, ExchangeRate
 from api.serializers import ExchangeRateSerializer, WalletSerializer, ClientReportSerializer, \
-    WalletRefillByNameSerializer, WalletToWalletByNameSerializer
+    WalletRefillByNameSerializer, WalletToWalletByNameSerializer, WalletHistorySerializer
 from payment_system.pagination import ResultsSetPagination
 
 
@@ -56,7 +56,7 @@ class WalletRefillByNameView(APIView):
             raise serializers.ValidationError(serializer.errors)
 
         wallet = serializer.validated_data['name']
-        # Создаем транзакция пополнения кошелька.
+        # Create a purse replenishment transaction.
         transaction_data = dict(wallet_to_id=wallet.pk,
                                 currency_id=wallet.currency.pk,
                                 amount=request.POST.get('amount'),
@@ -80,8 +80,8 @@ class WalletToWalletByNameView(APIView):
         if not serializer.is_valid():
             raise serializers.ValidationError(serializer.errors)
 
-        # Создаем транзакцию перевода от клиента > клиенту
-        wallet_from= serializer.validated_data['wallet_from']
+        # Create a transfer transaction from client> client
+        wallet_from = serializer.validated_data['wallet_from']
         wallet_to = serializer.validated_data['wallet_to']
         transaction_data = dict(
             operation='TRANSFER',
@@ -94,6 +94,8 @@ class WalletToWalletByNameView(APIView):
 
 
 class ClientReportView(APIView):
+
+    @method_decorator(handle_error_json())
     def get(self, request):
         data = request.GET.copy()
         serializer = ClientReportSerializer(data=data)
@@ -108,79 +110,47 @@ class ClientReportView(APIView):
         if 'end_date' in serializer.validated_data:
             args &= Q(oper_date__lte=serializer.validated_data['end_date'])
 
-        values = [
-            'oper',
-            'type',
-            'wallet_partner',
-            'wallet_partner_name',
-            'oper_date',
-            'amount',
-            'oper__usd_amount',
-        ]
-        values_trans = [
-            'ID операции',
-            'Тип',
-            'ID клиента',
-            'Имя клиента',
-            'Время',
-            'Cумма в валюте',
-            'Сумма в USD'
-        ]
-        wallet_history = WalletHistory.objects.filter(args).prefetch_related('oper')
-        queryset = wallet_history.values(*values)
-        if not queryset.exists():
+        wallet_history = WalletHistory.objects.filter(args).prefetch_related('oper', 'oper__currency')
+        if not wallet_history.exists():
             raise serializers.ValidationError({'non_field_errors': ["There are no transactions for this wallet."]})
 
-        # Конструктор TD элементов для HTML версии страницы.
-        html_tr = ""
-        for obj in queryset.iterator():
-            tr = "<tr>\n"
-            for val in values:
-                tr += "<td>{%s}</td>\n" % val
-            tr += '</tr>\n'
-            html_tr += tr.format(**obj)
-
-        # Конструктор TR элемента
-        html_header = '<tr style="text-align: right;">\n'
-        for val in values_trans:
-            html_header += '<th>{}</th>\n'.format(val)
-        html_header += '</tr>\n'
-
-        # Собираем основном HTML
-        html = """
-               <html>
-               <body>
-                    <ul>
-                        <li><a href="{path}?{params}&export_file_type=csv">Download CSV report</a></li>
-                        <li><a href="{path}?{params}&export_file_type=xml">Download XML report</a></li>
-                   </ul>
-                   <table border="1" class="dataframe">
-                        <thead>{html_header}</thead>
-                        <tbody>{html_tr}</tbody>
-                    </table>
-               <body>
-               </html>
-               """.format(path=request.META.get('PATH_INFO'),
-                          html_header=html_header,
-                          html_tr=html_tr,
-                          params="&".join(["{}={}".format(k, v) for k, v in data.items()]))
-
-        # Собираем файл отчета, если требуется.
-        file_type = data.get('export_file_type')
-        if file_type == 'xml':
-            XMLSerializer = core_serializers.get_serializer("xml")
+        # Report file generation.
+        export_file_type = data.get('export_file_type')
+        if export_file_type == 'xml':
             xml_serializer = XMLSerializer()
             xml_serializer.serialize(wallet_history)
-            response = HttpResponse(xml_serializer.getvalue(), content_type='text/xml')
+            response = HttpResponse(xml_serializer.getvalue(), content_type='text/xml', status=HTTP_200_OK)
             response['Content-Disposition'] = 'attachment; filename="Report for {}.xml"'.format(wallet.name)
             return response
-        elif file_type == 'csv':
-            response = HttpResponse(content_type='text/csv')
+        elif export_file_type == 'csv':
+            response = HttpResponse(content_type='text/csv', status=HTTP_200_OK)
             response['Content-Disposition'] = 'attachment; filename=Report for {}.csv"'.format(wallet.name)
+            values = [
+                'oper',
+                'type',
+                'wallet_partner',
+                'wallet_partner_name',
+                'oper_date',
+                'amount',
+                'oper__currency__currency',
+                'oper__usd_amount',
+            ]
+            values_trans = [
+                'ID операции',
+                'Тип',
+                'ID клиента',
+                'Имя клиента',
+                'Время',
+                'Cумма операции',
+                'Валюта операции',
+                'Сумма в USD'
+            ]
             writer = csv.writer(response, csv.excel)
             response.write(u'\ufeff'.encode('utf8'))  # BOM (optional...Excel needs it to open UTF-8 file properly)
             writer.writerow([smart_str(val) for val in values_trans])
-            for obj in queryset:
+            queryset = wallet_history.values(*values)
+            for obj in queryset.iterator():
                 writer.writerow([smart_str(obj[smart_str(val)]) for val in values])
             return response
-        return HttpResponse(html, content_type='text/html; charset=utf-8', status=HTTP_200_OK)
+
+        return Response(WalletHistorySerializer(wallet_history, many=True).data, status=HTTP_200_OK)

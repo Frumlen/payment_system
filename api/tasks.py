@@ -10,7 +10,7 @@ from api.models import Transaction, ExchangeRate, Operation, WalletHistory
 def create_transaction(data):
     with transaction.atomic():
         tran = Transaction.objects.create(**data)
-        # Получаем последний курс на момент совершения транзакции
+        # get the last course at the time of the transaction
         rate = ExchangeRate.objects.filter(currency=tran.currency, created__lte=tran.created).order_by('-created')\
             .first()
         if not rate:
@@ -53,7 +53,7 @@ def create_wallet_hist(tran, wallet, wallet_partner, oper, amount):
 
 
 def inc_wallet_balance(wallet, amount):
-    # Если денег на счету недостаточно, вызываем исключение, чтобы не создавать данных в базе.
+    # If there is not enough money in the account, we call an exception in order not to create data in the database.
     if wallet.balance + amount < 0:
         raise Exception('Wrong amount')
 

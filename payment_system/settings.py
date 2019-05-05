@@ -16,7 +16,7 @@ ADMINS = (
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'kx4&cvj6q*hb02$(sy^x-cd0^muktwxc&w5h=1qli@fw^5vm^z'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -146,3 +146,5 @@ DATE_INPUT_FORMATS = [
     '%m/%d/%y %H:%M',        # '10/25/06 14:30'
     '%m/%d/%y',              # '10/25/06'
 ]
+
+DATE_OUTPUT_FORMAT = '%Y-%m-%d %H:%M:%S'

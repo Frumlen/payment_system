@@ -4,7 +4,7 @@ from django.db import models
 
 class Currency(models.Model):
     currency_name = models.CharField(max_length=60, verbose_name='Название валюты')
-    currency = models.CharField(max_length=10, db_index=True, verbose_name='ISO')  # FIXME: добавить ISO4217 валидатор
+    currency = models.CharField(max_length=10, db_index=True, verbose_name='ISO')  # FIXME: add ISO4217 validator
     fractional = models.SmallIntegerField(verbose_name='Дробная часть')
 
     class Meta:
@@ -18,10 +18,8 @@ class Currency(models.Model):
 
 class Wallet(models.Model):
     name = models.CharField(max_length=255, unique=True, db_index=True, verbose_name='Имя клиента')
-    city = models.CharField(max_length=60,
-                            verbose_name='Страна')  # наибольшая длина страны: полное название Великобритании
-    country = models.CharField(max_length=180,
-                               verbose_name='Город проживания')  # наибольшая длина города: полное имя Bangko
+    city = models.CharField(max_length=60, verbose_name='Страна')
+    country = models.CharField(max_length=180, verbose_name='Город проживания')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата регистрации')
     balance = models.BigIntegerField(default=0, verbose_name='Баланс')
     currency = models.ForeignKey('api.Currency', on_delete=models.DO_NOTHING, verbose_name='Валюта кошелька')
@@ -60,7 +58,7 @@ class Operation(models.Model):
     currency = models.ForeignKey('api.Currency', on_delete=models.DO_NOTHING,
                                  verbose_name='Идентификатор валюты операции')
     operation = models.CharField(max_length=20,
-                                 verbose_name='Название операции')  # REFILL– пополнение, TRANSFER - перевод
+                                 verbose_name='Название операции')  # REFILL– replenishment, TRANSFER - transfer
     oper_amount = models.BigIntegerField(verbose_name='Cумма операции в валюте операции')
     usd_amount = models.BigIntegerField(verbose_name='Cумма операции в USD')
     created = models.DateTimeField(verbose_name='Дата операции')
@@ -97,7 +95,7 @@ class Transaction(models.Model):
     wallet_to = models.ForeignKey('api.Wallet', on_delete=models.DO_NOTHING, related_name='out_transactions',
                                   verbose_name='Кошелек, на который поступают деньги')
     operation = models.CharField(max_length=20,
-                                 verbose_name='Название операции')  # REFILL – пополнение, TRANSFER - перевод
+                                 verbose_name='Название операции')  # REFILL– replenishment, TRANSFER - transfer
     currency = models.ForeignKey('api.Currency', on_delete=models.DO_NOTHING, verbose_name='Валюта транзакции')
     status = models.CharField(max_length=6, db_index=True, verbose_name='Статус транзакции')
     amount = models.FloatField(verbose_name='Сумма операции')
