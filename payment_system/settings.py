@@ -148,3 +148,5 @@ DATE_INPUT_FORMATS = [
 ]
 
 DATE_OUTPUT_FORMAT = '%Y-%m-%d %H:%M:%S'
+"""Server-side cursor does not work well when using queryset.iterator (), this leads to hard-to-find bugs that do not even raise the exception, but, for example, simply do not see some records in the database, so we just chop it off"""
+DISABLE_SERVER_SIDE_CURSORS=True

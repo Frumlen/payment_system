@@ -5,7 +5,7 @@ from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER
 from django.utils.decorators import available_attrs
 from django.core.exceptions import ValidationError
 
-
+#TODO: Implement as middleware
 def handle_error_json():
     """
     Decorator for JSON views
