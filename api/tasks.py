@@ -5,6 +5,7 @@ from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Transaction, ExchangeRate, Operation, WalletHistory
 
+#TODO: Mb remove Celery + rabbitmq? Need Ddos test.
 
 @shared_task
 def create_transaction(data):
@@ -67,7 +68,7 @@ def _inc_wallet_balance(wallet, amount):
     """
     if wallet.balance + amount < 0:
         raise Exception('Wrong amount')
-
+    #TODO: Test for multiple charges.
     wallet.balance += amount
     wallet.save()
 
@@ -77,10 +78,10 @@ def processing_transactions():
     """
     Transaction processing method It is the whole logic of the transfer of money, the preservation of history
     """
-    transacitons = Transaction.objects.exclude(status__in=['start', 'done']).order_by('created')
+    transactions = Transaction.objects.exclude(status__in=['start', 'done']).order_by('created')
     counter = 0
 
-    for tran in transacitons.iterator():
+    for tran in transactions.iterator():
         try:
             with transaction.atomic():
                 rate = ExchangeRate.objects.filter(currency=tran.currency, created__lte=tran.created)\

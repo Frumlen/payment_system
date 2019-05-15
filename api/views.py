@@ -60,6 +60,7 @@ class WalletRefillByNameView(APIView):
                                 currency_id=wallet.currency.pk,
                                 amount=request.POST.get('amount'),
                                 operation='REFILL')
+        #TODO: Mb remove Celery + rabbitmq? Need Ddos test.
         create_transaction.delay(transaction_data)
         return Response(data=dict(result="success", message="Transaction REFILL created"), status=HTTP_200_OK)
 
@@ -87,6 +88,7 @@ class WalletToWalletByNameView(APIView):
             wallet_to_id=wallet_to.pk,
             currency_id=wallet_from.currency.pk if data['currency_use'] == 'FROM' else wallet_to.currency.pk,
             amount=data['amount'])
+        #TODO: Mb remove Celery + rabbitmq? Need Ddos test.
         create_transaction.delay(transaction_data)
         return Response(data=dict(result="success", message="Transaction TRANSFER created"), status=HTTP_200_OK)
 
